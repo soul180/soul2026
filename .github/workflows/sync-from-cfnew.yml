@@ -7,13 +7,13 @@ on:
 
 jobs:
   sync-release:
-    runs-on: ubuntu-latest
+    runs-on: ubuntu-24.04
     permissions:
       contents: write
 
     steps:
       - name: 检出仓库
-        uses: actions/checkout@v4
+        uses: actions/checkout@v5
         with:
           fetch-depth: 0
 
@@ -85,12 +85,13 @@ jobs:
             exit 1
           }
 
-          # 更稳妥的匹配：兼容 Pages.zip / pages.zip / Pages-xxx.zip 等
           DOWNLOAD_URL=$(echo "$ASSETS_JSON" | jq -r '
             .[]?
-            | select((.name // "") | test("Pages\\.zip$|Pages.*\\.zip$"; "i"))
+            | select((.name // "") | test("Pages.*\\.zip$"; "i"))
             | .browser_download_url
           ' | head -n 1)
+
+          FILE_NAME="Pages.zip"
 
           if [ -z "$DOWNLOAD_URL" ]; then
             echo "错误：未找到 Pages.zip 文件"
@@ -99,7 +100,6 @@ jobs:
             exit 1
           fi
 
-          FILE_NAME="Pages.zip"
           echo "download_url=$DOWNLOAD_URL" >> "$GITHUB_OUTPUT"
           echo "file_name=$FILE_NAME" >> "$GITHUB_OUTPUT"
           echo "下载 URL: $DOWNLOAD_URL"
